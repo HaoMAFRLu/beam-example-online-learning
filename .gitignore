@@ -1,0 +1,5 @@
+# Ignore the virtual environment directory
+myenv/
+
+# Igonre the test
+test/
