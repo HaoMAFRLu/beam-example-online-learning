@@ -91,7 +91,7 @@ class MFLQ():
         self.S, self.Ts, self.Tv = self.get_constant(self.T, self.xi, self.mode)
 
         self.w = torch.eye(self.l, dtype=torch.float32).to(self.device) * self._w
-        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-4
+        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-2
 
         self.Sigma_a = np.eye(self.l) * self._sigma_a
 
