@@ -16,17 +16,18 @@ class OnlineOptimizer():
     mode: gradient descent method or newton method
     B: identified linear model
     """
-    def __init__(self, mode: str, B: Array2D,
-                 alpha: float, epsilon: float, 
-                 eta: float, gamma: float,
-                 rolling: int=50) -> None:
+    def __init__(self, mode: str, 
+                 B: Array2D,
+                 alpha: float, 
+                 epsilon: float, 
+                 eta: float,
+                 rolling: int=20) -> None:
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.mode = mode
         self.B = self.move_to_device(B)
         self.alpha = alpha
         self.epsilon = epsilon
         self.eta = eta
-        self.gamma = gamma
         self.nr_iteration = 0
         self.rolling = rolling
         self.Lambda_list = []
@@ -121,42 +122,6 @@ class OnlineOptimizer():
         the distribution shift detected
         """
         self.omega_list.append(self.omega.clone())
-
-    @staticmethod
-    def rbf_kernel(x1: Array, x2: Array, gamma):
-        diff = x1 - x2
-        return np.exp(-gamma * np.dot(diff, diff))
-
-    def get_kernel(self, y: Array, y_list: list) -> Array:
-        """
-        """
-        k = []
-        for y_ in y_list:
-            k_ = self.rbf_kernel(y.flatten(), y_.flatten(), self.gamma)
-            k.append(k_)
-        return k 
-    
-    @staticmethod
-    def get_omega(k, omega) -> torch.Tensor:
-        """
-        """
-        return sum([x * y for x, y in zip(k, omega)])
-
-    @staticmethod
-    def normalize(lst):
-        total = sum(lst)
-        if total == 0:
-            normalized_lst = [0 for x in lst]
-        else:
-            normalized_lst = [x / total for x in lst]
-        return normalized_lst
-    
-    def initialize_omega(self, ydec: Array, yout_list: list) -> None:
-        """Initialize the parameters using kernel method
-        """
-        k = self.get_kernel(ydec, yout_list)
-        k = self.normalize(k)
-        self.omega = self.get_omega(k, self.omega_list)
 
     def optimize(self, yref: Array, yout: Array) -> Array:
         """Do the online optimization

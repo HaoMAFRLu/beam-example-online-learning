@@ -2,26 +2,24 @@
 """
 import torch
 from pathlib import Path
-import os, sys
-import importlib
+import os
 from typing import Tuple, List
 import pickle
 import numpy as np
-import numba as nb
-from datetime import datetime
-import time
 import random
+import matplotlib.pyplot as plt
+import time
+import math
 
 random.seed(10086)
 
 import utils as fcs
 from mytypes import Array, Array2D, Array3D
+from trajectory import TRAJ
 
 import networks
 import data_process
-import params
 import environmnet
-from trajectory import TRAJ
 from online_optimizer import OnlineOptimizer
 
 second_linear_output = []
@@ -34,7 +32,7 @@ class OnlineLearning():
                  alpha: float=None,
                  epsilon: float=None,
                  eta: float=None,
-                 gamma: float=None) -> None:
+                 is_vis: bool=False) -> None:
         """Initialize the online learning framework.
 
         Args:
@@ -43,7 +41,6 @@ class OnlineLearning():
             alpha: hyperparameter
             epsilon: hyperparameter
             eta: hyperparameter
-            gamma: hyperparameter
         """
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(torch.cuda.get_device_name(0))
@@ -54,9 +51,8 @@ class OnlineLearning():
         self.alpha = alpha
         self.epsilon = epsilon
         self.eta = eta
-        self.gamma = gamma
 
-        folder_name = self.get_folder_name()
+        folder_name = fcs.get_folder_name()
             
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
         self.path_data = os.path.join(self.path_model, 'data')
@@ -70,41 +66,11 @@ class OnlineLearning():
         self.nr_data_interval = 1
         self.nr_marker_interval = 20
 
-    @staticmethod
-    def get_folder_name() -> str:
-        """Generate the folder name according
-        to the current time.
-        """
-        current_time = datetime.now()
-        return current_time.strftime('%Y%m%d_%H%M%S')
-
-
-    @staticmethod
-    def get_params(path: Path) -> Tuple[dict]:
-        """Read the configurations for each module
-        from file.
-
-        Args:
-            path: the path to the config file
-        
-        Returns:
-            SIM_PARAMS: setting parameters for the simulation
-            DATA_PARAMS: parameters for generating data
-            NN_PARAMS: parameters for building the neural network
-        """
-        PATH_CONFIG = os.path.join(path, 'config.json')
-        PARAMS_LIST = ["SIM_PARAMS", "DATA_PARAMS", "NN_PARAMS"]
-        params_generator = params.PARAMS_GENERATOR(PATH_CONFIG)
-        params_generator.get_params(PARAMS_LIST)
-        return (params_generator.PARAMS['SIM_PARAMS'],
-                params_generator.PARAMS['DATA_PARAMS'],
-                params_generator.PARAMS['NN_PARAMS'])
-
-    def env_initialization(self, PARAMS: dict) -> environmnet:
-        """Initialize the simulation environment.
-        """
-        self.env = environmnet.BEAM('control_system_medium', PARAMS)
-        self.env.initialization()
+        self.is_vis = is_vis
+        if self.is_vis is True:
+            plt.ion()
+            self.losses = []
+            self.iterations = []
 
     def data_process_initialization(self, PARAMS: dict) -> None:
         """Initialize the data processor
@@ -125,30 +91,24 @@ class OnlineLearning():
             checkpoint = torch.load(path)
             self.model.NN.load_state_dict(checkpoint['model_state_dict'])
 
-    def traj_initialization(self) -> None:
-        """Create the class of reference trajectories
-        """
-        self.traj = TRAJ()
-
-    def load_dynamic_model(self) -> None:
-        """Load the linear dynamic model of the underlying system,
-        which is obtained from system identification. It include
-        matrices B and Bd.
-        """
-        path_file = os.path.join(self.root, 'data', 'linear_model', 'linear_model')
-        data = fcs.load_file(path_file)
-        self.B = data['B']
-        self.Bd = data['Bd']
-    
     def online_optimizer_initialization(self) -> None:
         """Initialize the kalman filter
         """
         self.online_optimizer = OnlineOptimizer(mode=self.mode, 
-                                                B=self.B, 
+                                                B=self.B,
                                                 alpha=self.alpha, 
                                                 epsilon=self.epsilon,
-                                                eta=self.eta, 
-                                                gamma=self.gamma)
+                                                eta=self.eta)
+
+    @staticmethod
+    def load_dynamic_model(l):
+        B = fcs.load_dynamic_model()
+        return B[:l, :l]
+
+    def traj_initialization(dt: float) -> TRAJ:
+        """Create the class of reference trajectories
+        """
+        return TRAJ(dt=dt)
 
     def initialization(self) -> None:
         """Initialize everything:
@@ -161,19 +121,20 @@ class OnlineLearning():
         3. load and initialize the data process
         4. build and load the pretrained neural network
         """
-        SIM_PARAMS, DATA_PARAMS, NN_PARAMS = self.get_params(self.root)
-        self.load_dynamic_model()
-        self.traj_initialization()
-        self.env_initialization(SIM_PARAMS)
+        SIM_PARAMS, DATA_PARAMS, NN_PARAMS = fcs.get_params(self.root)
+        self.l = math.floor(float(SIM_PARAMS['StopTime']) / SIM_PARAMS['dt'])
+
+        self.B = self.load_dynamic_model(self.l)
+        self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
+        self.env = fcs.env_initialization(SIM_PARAMS)
+
+        DATA_PARAMS['height'] = self.l
+        NN_PARAMS['height'] = self.l
+        NN_PARAMS['output_dim'] = self.l
+
         self.data_process_initialization(DATA_PARAMS)
         self.NN_initialization(NN_PARAMS)
         self.online_optimizer_initialization()
-    
-    @staticmethod
-    def get_loss(y1: np.ndarray, y2: np.ndarray) -> float:
-        """Calculate the loss
-        """
-        return 0.5*np.linalg.norm(y1-y2)/len(y1)
         
     @staticmethod
     def tensor2np(a: torch.tensor) -> Array:
@@ -224,7 +185,7 @@ class OnlineLearning():
     def _recover_last_layer(self, value: torch.Tensor, num: int) -> None:
         """
         """
-        w = value[0:num].view(-1, 550).t()
+        w = value[0:num].view(-1, self.l).t()
         b = value[num:].flatten()
         return w, b        
 
@@ -296,15 +257,8 @@ class OnlineLearning():
         """
         u, par_pi_par_omega = self.get_u(yref, is_gradient)
         yout, _ = env.one_step(u.flatten())
-        loss = self.get_loss(yout.flatten(), yref[0, 1:].flatten())
+        loss = fcs.get_loss(yout.flatten(), yref[0, 1:].flatten())
         return yout, u, par_pi_par_omega, loss
-
-    def shift_distribution(self, distribution: str='v1'):
-        """change the distribution
-        """
-        self.traj_initialization(distribution)
-        yref_marker, _ = self.traj.get_traj()
-        return yref_marker
 
     def marker_initialization(self) -> Tuple[Array2D, Path]:
         """Generate the marker trajectory and the 
@@ -412,6 +366,21 @@ class OnlineLearning():
             # save the model
             if (i+1) % self.nr_interval == 0:
                 self.save_checkpoint(i+1)
+
+            if self.is_vis is True:
+                self.losses.append(loss)
+                self.iterations.append(i)
+                
+                plt.clf()
+                plt.plot(self.iterations, self.losses, label='Training Loss')
+                plt.xlabel('Iteration')
+                plt.ylabel('Loss')
+                plt.title('Training Process')
+                plt.legend()
+                
+                plt.pause(0.01)
+                
+                time.sleep(0.01)
 
 
             

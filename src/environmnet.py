@@ -23,8 +23,7 @@ class BEAM():
         |--SimulationMode: the mode of the simulation
     """
     def __init__(self, model_name: str, PARAMS: dict) -> None:
-        self.dt = 0.01
-
+        self.dt = PARAMS['dt']
         self.model_name = model_name
         self.PARAMS = PARAMS
         self.root = fcs.get_parent_path(lvl=1)
@@ -44,7 +43,8 @@ class BEAM():
         SIM_PARAMS: the simulation parameters
         """
         for key, value in SIM_PARAMS.items():
-            self.ENGINE.set_param(self.model_name, key, value, nargout=0)
+            if key != 'dt':
+                self.ENGINE.set_param(self.model_name, key, value, nargout=0)
     
     def get_model_path(self, model_name: str) -> Path:
         """Get the path to the model
@@ -79,7 +79,7 @@ class BEAM():
         4. set the simulation parameters
         """
         self.start_engine()
-        self.ENGINE.eval("gpu_enabled = parallel.gpu.GPUDevice.isAvailable;", nargout=0)
+        # self.ENGINE.eval("gpu_enabled = parallel.gpu.GPUDevice.isAvailable;", nargout=0)
         self.add_path(self.path)
         self.load_system(self.model_path)
         self.set_parameters(self.PARAMS)

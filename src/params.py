@@ -15,6 +15,7 @@ class SIM_PARAMS:
     AbsTol: str
     Solver: str
     SimulationMode: str
+    dt: float
 
 @dataclass
 class DATA_PARAMS:

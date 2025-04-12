@@ -14,8 +14,7 @@ torch.manual_seed(9527)
 
 def main(alpha: float,
          epsilon: float,
-         eta: float,
-         gamma: float):
+         eta: float):
     """For the specific meaning of the parameters 
     please refer to the paper.
     """ 
@@ -24,12 +23,11 @@ def main(alpha: float,
                                      alpha=alpha,
                                      epsilon=epsilon,
                                      eta=eta,
-                                     gamma=gamma)
+                                     is_vis=True)
     
-    online_learning.online_learning(15000)
+    online_learning.online_learning(300)
 
 if __name__ == '__main__':
-    main(alpha = 1.0,
-         epsilon = 1.0,
-         eta = 1.0,
-         gamma = 1.0)
+    main(alpha = 0.10,
+         epsilon = 0.10,
+         eta = 10.0)

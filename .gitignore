@@ -3,3 +3,6 @@ myenv/
 
 # Igonre the test
 test/
+
+# Ignore the data
+data/

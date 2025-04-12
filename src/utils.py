@@ -9,8 +9,14 @@ from tabulate import tabulate
 import shutil
 import torch
 import pickle
+from datetime import datetime
 
 from mytypes import Array, Array2D
+import environmnet
+from trajectory import TRAJ
+import params
+
+
 
 def load_file(path: Path) -> dict:
     """Load data from specified file.
@@ -173,6 +179,56 @@ def diagonal_concatenate(A, B, max_size):
     
     return result
 
+def get_folder_name() -> str:
+    """Generate the folder name according
+    to the current time.
+    """
+    current_time = datetime.now()
+    return current_time.strftime('%Y%m%d_%H%M%S')
 
+def env_initialization(PARAMS: dict) -> environmnet:
+    """Initialize the simulation environment.
+    """
+    env = environmnet.BEAM('control_system_medium', PARAMS)
+    env.initialization()
+    return env
 
+def load_dynamic_model() -> None:
+    """Load the linear dynamic model of the underlying system,
+    which is obtained from system identification. It include
+    matrices B and Bd.
+    """
+    root = get_parent_path(lvl=1)
+    path_file = os.path.join(root, 'data', 'linear_model', 'linear_model')
+    data = load_file(path_file)
+    return data['B']
 
+def traj_initialization(dt: float) -> TRAJ:
+    """Create the class of reference trajectories
+    """
+    return TRAJ(dt=dt)
+
+def get_params(path: Path) -> Tuple[dict]:
+    """Read the configurations for each module
+    from file.
+
+    Args:
+        path: the path to the config file
+    
+    Returns:
+        SIM_PARAMS: setting parameters for the simulation
+        DATA_PARAMS: parameters for generating data
+        NN_PARAMS: parameters for building the neural network
+    """
+    PATH_CONFIG = os.path.join(path, 'config.json')
+    PARAMS_LIST = ["SIM_PARAMS", "DATA_PARAMS", "NN_PARAMS"]
+    params_generator = params.PARAMS_GENERATOR(PATH_CONFIG)
+    params_generator.get_params(PARAMS_LIST)
+    return (params_generator.PARAMS['SIM_PARAMS'],
+            params_generator.PARAMS['DATA_PARAMS'],
+            params_generator.PARAMS['NN_PARAMS'])
+
+def get_loss(y1: np.ndarray, y2: np.ndarray) -> float:
+    """Calculate the loss
+    """
+    return 0.5*np.linalg.norm(y1-y2)/len(y1)

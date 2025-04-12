@@ -18,9 +18,12 @@ class NETWORK_CNN():
         |-- weight_decay: weight decay of the optimizer
         |-- 
     """
-    def __init__(self, device: str, PARAMS: dict) -> None:
+    def __init__(self, device: str, 
+                 PARAMS: dict,
+                 nr_hidden: int=20) -> None:
         self.device = device
         self.PARAMS = PARAMS
+        self.nr_hidden = nr_hidden
     
     @staticmethod
     def initialize_weight(nn: torch.nn, sparsity: float=0.90, std: float=0.1) -> None:
@@ -62,11 +65,11 @@ class NETWORK_CNN():
                                               patience=patience)
 
     @staticmethod
-    def _get_model(PARAMS) -> torch.nn:
+    def _get_model(PARAMS, nr_hidden) -> torch.nn:
         """Create the neural network
         """
         return FCN(input_size=PARAMS['hl']+PARAMS['hr']+1,
-                   hidden_size=40,
+                   hidden_size=nr_hidden,
                    output_size=1)
 
     @staticmethod
@@ -84,7 +87,7 @@ class NETWORK_CNN():
                 print(f"Parameter: {name}, Size: {param.size()}, Number of parameters: {param.numel()}")
 
     def build_network(self) -> None:
-        self.NN = self._get_model(PARAMS=self.PARAMS)
+        self.NN = self._get_model(PARAMS=self.PARAMS, nr_hidden=self.nr_hidden)
         self.NN.to(self.device)
         self.loss_function = self._get_loss_function(self.PARAMS['loss_function'], self.PARAMS['lambda_regression'])
         self.loss_function.to(self.device)
