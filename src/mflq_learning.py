@@ -64,9 +64,9 @@ class MFLQ():
         """Return some necessary constant.
         """
         if mode == 'v1':
-            S = math.floor(math.pow(T, 1/3 - xi) - 1)
-            Ts = 8
-            Tv = math.floor(math.pow(T, 2/3 + xi))
+            S = 20 # math.floor(math.pow(T, 1/3 - xi) - 1)
+            Ts = 4
+            Tv = 24 # math.floor(math.pow(T, 2/3 + xi))
         elif mode == 'v2':
             S = math.floor(math.pow(T, 1/4))
             Ts = math.floor(math.pow(T, 1/4 - xi))
@@ -91,7 +91,7 @@ class MFLQ():
         self.S, self.Ts, self.Tv = self.get_constant(self.T, self.xi, self.mode)
 
         self.w = torch.eye(self.l, dtype=torch.float32).to(self.device) * self._w
-        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-5
+        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-4
 
         self.Sigma_a = np.eye(self.l) * self._sigma_a
 
