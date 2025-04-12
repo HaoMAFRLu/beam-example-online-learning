@@ -192,7 +192,8 @@ class MFLQ():
     def get_G(self, Psi, Phi, c, W, h_hat):
         """
         """
-        Psi_inv = torch.linalg.inv(Psi.t() @ Psi + self.E) @ Psi.t()
+        # Psi_inv = torch.linalg.inv(Psi.t() @ Psi + self.E) @ Psi.t()
+        Psi_inv = torch.linalg.pinv(Psi)
         _c = c + (Phi - W) @ h_hat
         vec_G = Psi_inv @ _c
         return vec_G.reshape(self.l * 2, self.l * 2)
