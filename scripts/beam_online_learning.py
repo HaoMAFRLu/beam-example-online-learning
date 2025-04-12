@@ -23,11 +23,11 @@ def main(alpha: float,
                                      alpha=alpha,
                                      epsilon=epsilon,
                                      eta=eta,
-                                     is_vis=True)
+                                     is_vis=False)
     
-    online_learning.online_learning(300)
+    online_learning.online_learning(500)
 
 if __name__ == '__main__':
-    main(alpha = 0.10,
+    main(alpha = 1.0,
          epsilon = 0.10,
-         eta = 10.0)
+         eta = 15.0)

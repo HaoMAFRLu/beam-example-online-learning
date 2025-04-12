@@ -20,7 +20,7 @@ class NETWORK_CNN():
     """
     def __init__(self, device: str, 
                  PARAMS: dict,
-                 nr_hidden: int=20) -> None:
+                 nr_hidden: int=40) -> None:
         self.device = device
         self.PARAMS = PARAMS
         self.nr_hidden = nr_hidden

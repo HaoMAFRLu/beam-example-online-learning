@@ -49,10 +49,11 @@ class MFLQ():
         self.initialization()
         
         self.is_vis = is_vis
+        self.losses = []
+        self.iterations = []
+
         if self.is_vis is True:
-            plt.ion()
-            self.losses = []
-            self.iterations = []
+            plt.ion()          
 
     def policy_initialization(self) -> Array2D:
         """Initialize the policy.
