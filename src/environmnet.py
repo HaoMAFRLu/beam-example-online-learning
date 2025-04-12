@@ -50,7 +50,7 @@ class BEAM():
         """Get the path to the model
         """
         _model_name = model_name + '.slx'
-        model_path = os.path.join(self.root, 'model', _model_name)
+        model_path = os.path.join(self.root, 'model_2020', _model_name)
         return model_path
 
     def add_path(self, path: Path) -> None:
