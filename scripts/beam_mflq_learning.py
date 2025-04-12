@@ -25,7 +25,7 @@ def main(mode,
                     exp_name=exp_name,
                     _w=_w,
                     _sigma_a=_sigma_a,
-                    is_vis=True)
+                    is_vis=False)
     
     learning.learning()
 
