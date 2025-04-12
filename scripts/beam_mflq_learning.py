@@ -35,4 +35,4 @@ if __name__ == '__main__':
          xi=0.00001,
          exp_name='mlfqv1',
          _w=0.3,
-         _sigma_a=0.3)
+         _sigma_a=1.0)
