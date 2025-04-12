@@ -27,7 +27,7 @@ class BEAM():
         self.model_name = model_name
         self.PARAMS = PARAMS
         self.root = fcs.get_parent_path(lvl=1)
-        self.path = os.path.join(self.root, 'model')
+        self.path = os.path.join(self.root, 'model_2020')
         self.model_path = self.get_model_path(self.model_name)
     
     def start_engine(self) -> None:
