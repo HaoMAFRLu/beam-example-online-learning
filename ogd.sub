@@ -1,8 +1,8 @@
 executable = /lustre/home/hma2/projects/OnlineLearning/myenv/bin/python
 arguments = -u scripts/beam_online_learning.py
-error  = jobs/mflq/task$(Process).err
-output = jobs/mflq/task$(Process).out
-log    = jobs/mflq/task$(Process).log
+error  = jobs/ogd/task$(Process).err
+output = jobs/ogd/task$(Process).out
+log    = jobs/ogd/task$(Process).log
 request_gpus = 1
 request_memory = 65536
 request_cpus = 1
