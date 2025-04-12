@@ -247,9 +247,10 @@ class MFLQ():
                     Iteration=[str(ii)],
                     Loss=[loss[ii]])
             
+            self.losses = self.losses + loss
+            self.iterations = self.iterations + list(range(idx1, idx2))
+
             if self.is_vis is True:
-                self.losses = self.losses + loss
-                self.iterations = self.iterations + list(range(idx1, idx2))
                 
                 plt.clf()
                 plt.plot(self.iterations, self.losses, label='Training Loss')
