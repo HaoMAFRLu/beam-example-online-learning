@@ -1,0 +1,9 @@
+executable = /lustre/home/hma2/projects/OnlineLearning/myenv/bin/python
+arguments = -u scripts/beam_olq_learning.py
+error  = jobs/olq/task$(Process).err
+output = jobs/olq/task$(Process).out
+log    = jobs/olq/task$(Process).log
+request_gpus = 1
+request_memory = 65536
+request_cpus = 1
+queue

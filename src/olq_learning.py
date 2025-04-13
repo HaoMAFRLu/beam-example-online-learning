@@ -66,7 +66,6 @@ class OLQ():
         self.env = fcs.env_initialization(SIM_PARAMS)
         
         self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-2
-        self.Sigma = torch.eye(self.l*2, dtype=torch.float32).to(self.device)
 
         self.Q = torch.eye(self.l, dtype=torch.float32).to(self.device)
         self.R = torch.eye(self.l, dtype=torch.float32).to(self.device) * 0.05
@@ -75,6 +74,8 @@ class OLQ():
             torch.cat([self.Q, -self.Q], dim=1),
             torch.cat([-self.Q, self.R], dim=1)
         ], dim=0)
+
+        self.A = np.zeros((self.l, self.l))
 
     def update_L(self, K) -> Array2D:
         """
@@ -85,10 +86,9 @@ class OLQ():
     def get_u(K: Array2D, yref: Array2D, V: Array2D) -> Array2D:
         """Return the input.
         """
-        mean = torch.matmul(K, yref)
-        dist = MultivariateNormal(mean, covariance_matrix=V)
-        sample = dist.sample()
-        return sample.numpy().cpu()
+        mean = K@yref.reshape(-1, 1)
+        # return np.random.multivariate_normal(mean.flatten(), V)
+        return mean
 
     def get_traj(self):
         """Remove the first element.
@@ -122,20 +122,20 @@ class OLQ():
 
     def get_K_V(self, Sigma, l):
         K = self.cal_K(Sigma, l)
-        V = self.cal_V(Sigma, K, V)
+        V = self.cal_V(Sigma, K, l)
         return K, V
     
-    def get_W(self, yout, yref):
-        W = np.abs(yout - self.B@self.K@yref)
+    def get_W(self, yout, yref, K):
+        _yout = self.B@K@yref.reshape(-1, 1)
+        dy = (yout.flatten() - _yout.flatten()) ** 2
+        return np.diag(dy)
 
-    def projection(self, Sigma_tilde, nu, W):
+    def projection(self, Sigma_tilde, nu, W, K):
         """
         """  
         Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
         
-        # 动态约束矩阵
-        M = np.block([[A, np.zeros((d, d)), B],
-                      [np.zeros((d, d)), A_ref, np.zeros((d, k))]])
+        M = np.hstack((self.A, self.B@K))
         
         objective = cp.Minimize(cp.norm(Sigma - Sigma_tilde, 'fro'))
         
@@ -148,35 +148,36 @@ class OLQ():
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.SCS, verbose=False) 
         
-        if prob.status != cp.OPTIMAL:
-            raise ValueError("Projection failed!")
-        
         return Sigma.value
 
     def learning(self) -> None:
         loss_list = []
+        it_list = []
+        Sigma = torch.eye(self.l*2, dtype=torch.float32).to(self.device)
 
         for i in range(self.T):
             yref = self.get_traj()
-            K, V = self.get_K_V(self.Sigma, self.l)
+            K, V = self.get_K_V(Sigma, self.l)
             self.update_L(K)
-            u = self.get_u(K, yref, V)
+            u = self.get_u(K.cpu().numpy(), yref, V.cpu().numpy())
             yout, _ = self.env.one_step(u.flatten())           
-            W = self.get_W(yout)
+            W = self.get_W(yout.flatten(), yref.flatten(), K.cpu().numpy())
             Sigma = Sigma - self.eta * self.L
-            Sigma = self.projection(Sigma, self.nu, W)
-            loss = fcs.get_loss(yref, yout)
+            Sigma = self.projection(Sigma.cpu().numpy(), self.nu, W, K.cpu().numpy())
+            Sigma = torch.from_numpy(Sigma).float().to(self.device)
+            loss = fcs.get_loss(yref.flatten(), yout.flatten())
 
             fcs.print_info(
                 Epoch=[str(i)],
                 Loss=[loss])
             
             loss_list.append(loss)
+            it_list.append(i)
 
             if self.is_vis is True:
                 
                 plt.clf()
-                plt.plot(self.iterations, self.losses, label='Training Loss')
+                plt.plot(it_list, loss_list, label='Training Loss')
                 plt.xlabel('Iteration')
                 plt.ylabel('Loss')
                 plt.title('Training Process')
