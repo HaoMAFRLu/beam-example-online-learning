@@ -17,7 +17,8 @@ def main(T: int,
     """For the specific meaning of the parameters 
     please refer to the paper.
     """ 
-    learning = OLQ(exp_name=exp_name,
+    learning = OLQ(T=T,
+                   exp_name=exp_name,
                    eta=eta,
                    nu=nu,
                    is_vis=False)

@@ -17,7 +17,7 @@ random.seed(10086)
 import utils as fcs 
 from mytypes import Array, Array2D, Array3D
 
-class OLQ():
+class AC():
     """
     """
     def __init__(self, 
@@ -38,7 +38,7 @@ class OLQ():
         self.H = H
         self.gamma = gamma
         self.kappa = kappa
-
+    
         self.root = fcs.get_parent_path(lvl=1)
 
         folder_name = fcs.get_folder_name()
@@ -66,6 +66,9 @@ class OLQ():
         SIM_PARAMS, DATA_PARAMS, _ = fcs.get_params(self.root)
         self.l = math.floor(float(SIM_PARAMS['StopTime']) / SIM_PARAMS['dt'])
         self.B = self.load_dynamic_model(self.l)
+        
+        self.B = torch.from_numpy(self.B).float().to(self.device)
+        self.K = torch.linalg.inv(self.B)
 
         self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
         self.env = fcs.env_initialization(SIM_PARAMS)
@@ -75,22 +78,23 @@ class OLQ():
     def get_M_list(self):
         """
         """
+        sigma = 0.1
         self.M_list = []
+        self.w_list = []
         for i in range(self.H):
+            temp = sigma * torch.randn(self.l, self.l, requires_grad=True, dtype=torch.float32, device=self.device)
+            self.M_list.append(temp.detach().clone().requires_grad_())
+            self.w_list.append(torch.zeros((self.l, 1), dtype=torch.float32, device=self.device))
             
-
-    def update_L(self, K) -> Array2D:
-        """
-        """
-        self.L[self.l:, self.l:] = K.t()@self.R@K
-    
-    @staticmethod
-    def get_u(K: Array2D, yref: Array2D, V: Array2D) -> Array2D:
+    def get_u(self, yref) -> Array2D:
         """Return the input.
         """
-        mean = K@yref.reshape(-1, 1)
-        # return np.random.multivariate_normal(mean.flatten(), V)
-        return mean
+        y = torch.from_numpy(yref.reshape(-1, 1)).float().to(self.device)
+        u = self.K@y
+        for i in range(self.H): 
+            u += self.M_list[i]@self.w_list[i]
+
+        return u
 
     def get_traj(self):
         """Remove the first element.
@@ -108,66 +112,48 @@ class OLQ():
         with open(path_data, 'wb') as file:
             pickle.dump(kwargs, file)
 
-    @staticmethod
-    def cal_K(Sigma, l):
-        """
-        """
-        Sigma_rr = Sigma[l:, l:]
-        Sigma_xr = Sigma[:l, l:]
-        return Sigma_xr@torch.linalg.inv(Sigma_rr)
-    
-    @staticmethod
-    def cal_V(Sigma, K, l):
-        Sigma_xx = Sigma[:l, :l]
-        Sigma_rr = Sigma[l:, l:]
-        return Sigma_xx - K@Sigma_rr@K.t()
+    def get_grad(self, yout, yref, u):
+        a = torch.from_numpy(yout.reshape(1, -1) - yref.reshape(1, -1)).float().to(self.device)
+        phi = a @ self.B @ u
+        phi.backward(retain_graph=True)
+        self.M_grad = []
+        for i in range(self.H):
+            self.M_grad.append(self.M_list[i].grad)
+            self.M_list[i].grad.zero_() 
 
-    def get_K_V(self, Sigma, l):
-        K = self.cal_K(Sigma, l)
-        V = self.cal_V(Sigma, K, l)
-        return K, V
-    
-    def get_W(self, yout, yref, K):
-        _yout = self.B@K@yref.reshape(-1, 1)
-        dy = (yout.flatten() - _yout.flatten()) ** 2
-        return np.diag(dy)
-
-    def projection(self, Sigma_tilde, nu, W, K):
+    def update_M(self):
         """
-        """  
-        Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
-        
-        M = np.hstack((self.A, self.B@K))
-        
-        objective = cp.Minimize(cp.norm(Sigma - Sigma_tilde, 'fro'))
-        
-        constraints = [
-            Sigma >> 0,  
-            cp.trace(Sigma) <= nu,  
-            Sigma[:self.l, :self.l] == M @ Sigma @ M.T + W
-        ]
-        
-        prob = cp.Problem(objective, constraints)
-        prob.solve(solver=cp.SCS, verbose=False) 
-        
-        return Sigma.value
+        """
+        M_temp = [self.M_list[i] - self.eta * self.M_grad[i] for i in range(self.H)]
+        for i in range(self.H):
+            norm_bound = self.kappa**4 * (1 - self.gamma)**i
+            if torch.norm(M_temp[i]) > norm_bound:
+                self.M_list[i] = (M_temp[i] * (norm_bound / torch.norm(M_temp[i]))).detach().clone().requires_grad_()
+            else:
+                self.M_list[i] = M_temp[i].detach().clone().requires_grad_()
+
+    def update_w(self, yout, u):
+        """
+        """
+        y = torch.from_numpy(yout.reshape(-1, 1)).float().to(self.device)
+        w = y - self.B@u
+        self.w_list.insert(0, w) 
+        self.w_list.pop()   
 
     def learning(self) -> None:
         loss_list = []
         it_list = []
-        Sigma = torch.eye(self.l*2, dtype=torch.float32).to(self.device)
 
         for i in range(self.T):
             yref = self.get_traj()
-            K, V = self.get_K_V(Sigma, self.l)
-            self.update_L(K)
-            u = self.get_u(K.cpu().numpy(), yref, V.cpu().numpy())
-            yout, _ = self.env.one_step(u.flatten())           
-            W = self.get_W(yout.flatten(), yref.flatten(), K.cpu().numpy())
-            Sigma = Sigma - self.eta * self.L
-            Sigma = self.projection(Sigma.cpu().numpy(), self.nu, W, K.cpu().numpy())
-            Sigma = torch.from_numpy(Sigma).float().to(self.device)
+            u = self.get_u(yref)
+            yout, _ = self.env.one_step(u.detach().cpu().numpy().flatten())
             loss = fcs.get_loss(yref.flatten(), yout.flatten())
+            self.get_grad(yout, yref, u)
+
+            self.update_M()
+            self.update_w(yout, u)
+
 
             fcs.print_info(
                 Epoch=[str(i)],
