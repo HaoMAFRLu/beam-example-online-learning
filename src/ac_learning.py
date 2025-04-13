@@ -22,9 +22,11 @@ class OLQ():
     """
     def __init__(self, 
                  T: int=500,
+                 H: int=80,
                  eta: float=0.1,  # step size
                  exp_name: str='test',
-                 nu: float=0.1,  # trace limit
+                 kappa: float=5.0,  # trace limit
+                 gamma: float=0.05,
                  is_vis: bool=False):
         """Learning using model-free control of LQ systems.
         """
@@ -33,7 +35,10 @@ class OLQ():
 
         self.T = T  # number of iterations
         self.eta = eta
-        self.nu = nu
+        self.H = H
+        self.gamma = gamma
+        self.kappa = kappa
+
         self.root = fcs.get_parent_path(lvl=1)
 
         folder_name = fcs.get_folder_name()
@@ -65,17 +70,14 @@ class OLQ():
         self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
         self.env = fcs.env_initialization(SIM_PARAMS)
         
-        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-2
+        self.get_M_list()
 
-        self.Q = torch.eye(self.l, dtype=torch.float32).to(self.device)
-        self.R = torch.eye(self.l, dtype=torch.float32).to(self.device) * 0.05
-
-        self.L = torch.cat([
-            torch.cat([self.Q, -self.Q], dim=1),
-            torch.cat([-self.Q, self.R], dim=1)
-        ], dim=0)
-
-        self.A = np.zeros((self.l, self.l))
+    def get_M_list(self):
+        """
+        """
+        self.M_list = []
+        for i in range(self.H):
+            
 
     def update_L(self, K) -> Array2D:
         """
@@ -146,7 +148,7 @@ class OLQ():
         ]
         
         prob = cp.Problem(objective, constraints)
-        prob.solve(solver=cp.SCS, eps=1e-1, max_iters=500, verbose=False) 
+        prob.solve(solver=cp.SCS, verbose=False) 
         
         return Sigma.value
 
