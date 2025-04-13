@@ -69,9 +69,9 @@ class MFLQ():
             Ts = 4
             Tv = 24 # math.floor(math.pow(T, 2/3 + xi))
         elif mode == 'v2':
-            S = math.floor(math.pow(T, 1/4))
-            Ts = math.floor(math.pow(T, 1/4 - xi))
-            Tv = math.floor(0.5*math.pow(T, 3/4))
+            S = 20
+            Ts = 4
+            Tv = 24
         return S, Ts, Tv
 
     @staticmethod
