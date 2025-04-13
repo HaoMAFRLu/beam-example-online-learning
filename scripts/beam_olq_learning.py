@@ -20,7 +20,7 @@ def main(T: int,
     learning = OLQ(exp_name=exp_name,
                    eta=eta,
                    nu=nu,
-                   is_vis=True)
+                   is_vis=False)
     
     learning.learning()
 
