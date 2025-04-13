@@ -47,9 +47,6 @@ class OLQ():
         self.initialization()
         
         self.is_vis = is_vis
-        self.losses = []
-        self.iterations = []
-
         if self.is_vis is True:
             plt.ion()          
 
@@ -69,7 +66,7 @@ class OLQ():
         self.env = fcs.env_initialization(SIM_PARAMS)
         
         self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-2
-        self.Sigma = torch.eye(self.l*3, dtype=torch.float32).to(self.device)
+        self.Sigma = torch.eye(self.l*2, dtype=torch.float32).to(self.device)
 
         self.Q = torch.eye(self.l, dtype=torch.float32).to(self.device)
         self.R = torch.eye(self.l, dtype=torch.float32).to(self.device) * 0.05
@@ -131,27 +128,21 @@ class OLQ():
     def get_W(self, yout, yref):
         W = np.abs(yout - self.B@self.K@yref)
 
-    def projection(self, Sigma_tilde, nu):
+    def projection(self, Sigma_tilde, nu, W):
         """
-        """
-        n = self.l * 2  # 联合协方差矩阵维度
-        
-        # 定义优化变量
-        Sigma = cp.Variable((n, n), symmetric=True)
+        """  
+        Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
         
         # 动态约束矩阵
         M = np.block([[A, np.zeros((d, d)), B],
                       [np.zeros((d, d)), A_ref, np.zeros((d, k))]])
-        
-        W_tilde = np.block([[W, np.zeros((d, d))],
-                            [np.zeros((d, d)), np.zeros((d, d))]])
         
         objective = cp.Minimize(cp.norm(Sigma - Sigma_tilde, 'fro'))
         
         constraints = [
             Sigma >> 0,  
             cp.trace(Sigma) <= nu,  
-            Sigma[:2*d, :2*d] == M @ Sigma @ M.T + W_tilde 
+            Sigma[:self.l, :self.l] == M @ Sigma @ M.T + W
         ]
         
         prob = cp.Problem(objective, constraints)
