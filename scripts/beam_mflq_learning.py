@@ -30,9 +30,9 @@ def main(mode,
     learning.learning()
 
 if __name__ == '__main__':
-    main(mode='v1',
+    main(mode='v2',
          T=300,
          xi=0.00001,
-         exp_name='mlfqv1',
+         exp_name='mlfqv2',
          _w=0.3,
          _sigma_a=1.0)
