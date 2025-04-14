@@ -26,7 +26,7 @@ def main(T: int,
     learning.learning()
 
 if __name__ == '__main__':
-    main(T=500,
+    main(T=1000,
          eta=0.1,
          exp_name='olq',
          nu=200)
