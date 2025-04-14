@@ -70,7 +70,7 @@ class AC():
         self.B = self.load_dynamic_model(self.l)
         
         self.B = torch.from_numpy(self.B).float().to(self.device)
-        self.K = torch.linalg.inv(self.B)
+        self.K = torch.ones_like(self.B).float().to(self.device) * 0.1
 
         self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
         self.env = fcs.env_initialization(SIM_PARAMS)
@@ -141,7 +141,8 @@ class AC():
         """
         """
         y = torch.from_numpy(yout.reshape(-1, 1)).float().to(self.device)
-        w = y - self.B@u
+        # w = y - self.B@u
+        w = y
         self.w_list.insert(0, w) 
         self.w_list.pop()   
 
@@ -157,7 +158,8 @@ class AC():
             self.get_grad(yout, yref, u)
 
             self.update_M()
-            self.update_w(yout, u)
+            # self.update_w(yout, u)
+            self.update_w(yref, u)
 
             self.save_data(iteration=i,
                            loss=loss,

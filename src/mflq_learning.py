@@ -98,14 +98,14 @@ class MFLQ():
 
         self.Sigma_a = np.eye(self.l) * self._sigma_a
 
-        self.Phi = torch.zeros((self.Tv, self.l ** 2), dtype=torch.float32).to(self.device)
-        self.Phi_plus = torch.zeros((self.Tv, self.l ** 2), dtype=torch.float32).to(self.device)
+        self.Phi = torch.zeros((self.Tv + 1, self.l ** 2), dtype=torch.float32).to(self.device)
+        # self.Phi_plus = torch.zeros((self.Tv, self.l ** 2), dtype=torch.float32).to(self.device)
         self.W = torch.zeros((self.Tv, self.l ** 2), dtype=torch.float32).to(self.device)
         self.c = torch.zeros((self.Tv, 1), dtype=torch.float32).to(self.device)
 
         self.tau_s = math.floor(self.Tv / self.Ts)
         self.ZPsi = torch.zeros((self.tau_s, (self.l + self.l) ** 2), dtype=torch.float32).to(self.device)
-        self.ZPhi_plus = torch.zeros((self.tau_s, self.l ** 2), dtype=torch.float32).to(self.device)
+        self.ZPhi_plus = torch.zeros((self.tau_s + 1, self.l ** 2), dtype=torch.float32).to(self.device)
         self.ZW = torch.zeros((self.tau_s, self.l ** 2), dtype=torch.float32).to(self.device)
         self.Zc = torch.zeros((self.tau_s, 1), dtype=torch.float32).to(self.device)
 
@@ -139,8 +139,15 @@ class MFLQ():
 
             self.Zc[i] = self.get_l_loss(yref.flatten(), yout.flatten())
             self.ZW[i, :] = self.w.flatten()   
-            self.ZPhi_plus[i, :] = self.get_vec(yout)
-            self.ZPsi[i, :] = self.get_vec(np.concatenate((yout.flatten(), yref.flatten())))
+            self.ZPhi_plus[i, :] = self.get_vec(yout.flatten() - yref.flatten())
+            self.ZPsi[i, :] = self.get_vec(np.concatenate((yout.flatten()-yref.flatten(), a.flatten())))
+
+        yref = self.get_random_traj(Sigma)
+        a = self.get_u(K, yref)
+        yout, _ = self.env.one_step(a.flatten())
+        self.ZPhi_plus[self.tau_s, :] = self.get_vec(yout.flatten() - yref.flatten())
+        
+        
 
     def get_l_loss(self, y1: Array, y2: Array) -> float:
         """
@@ -165,8 +172,7 @@ class MFLQ():
             yout, _ = self.env.one_step(a.flatten())
 
             self.c[i] = self.get_l_loss(yref.flatten(), yout.flatten())
-            self.Phi[i, :] = self.get_vec(yref)
-            self.Phi_plus[i, :] = self.get_vec(yout)
+            self.Phi[i, :] = self.get_vec(yout.flatten() - yref.flatten())
             self.W[i, :] = self.w.flatten()
 
             loss = fcs.get_loss(yref.flatten(), yout.flatten())
@@ -193,9 +199,38 @@ class MFLQ():
                 plt.pause(0.01)
                 
                 time.sleep(0.01)
+    
+        self.cur_it += 1
+
+        yref = self.get_traj()
+        a = self.get_u(K, yref)
+        yout, _ = self.env.one_step(a.flatten())
+
+        self.Phi[self.Tv, :] = self.get_vec(yout.flatten() - yref.flatten())
+        loss = fcs.get_loss(yref.flatten(), yout.flatten())
+
+        self.save_data(iteration=self.cur_it,
+                        loss=loss,
+                        yref=yref,
+                        yout=yout)
         
+        fcs.print_info(Iteration=[str(self.cur_it)],
+                        Loss=[loss])
+        
+        self.losses.append(loss)
+        self.iterations.append(self.cur_it)
 
-
+        if self.is_vis is True:
+            plt.clf()
+            plt.plot(self.iterations, self.losses, label='Training Loss')
+            plt.xlabel('Iteration')
+            plt.ylabel('Loss')
+            plt.title('Training Process')
+            plt.legend()
+            
+            plt.pause(0.01)
+            
+            time.sleep(0.01)
 
     @staticmethod
     def get_h_hat(Phi1, Phi2, W, c) -> Array:
@@ -237,16 +272,16 @@ class MFLQ():
         
         for i in range(self.S):
             self.run_mult_rounds(self.K)
-            h_hat = self.get_h_hat(self.Phi, self.Phi_plus, self.W, self.c)
+            h_hat = self.get_h_hat(self.Phi[:-1, :], self.Phi[1:, :], self.W, self.c)
 
             if self.mode == 'v2':
                 self.collect_data(self.K, self.Sigma_a)
             
             if G is None:
-                G = self.get_G(self.ZPsi, self.ZPhi_plus, self.Zc, self.ZW, h_hat)
+                G = self.get_G(self.ZPsi, self.ZPhi_plus[1:, :], self.Zc, self.ZW, h_hat)
             else:
-                G += self.get_G(self.ZPsi, self.ZPhi_plus, self.Zc, self.ZW, h_hat)
+                G += self.get_G(self.ZPsi, self.ZPhi_plus[1:, :], self.Zc, self.ZW, h_hat)
 
-            self.K = self.update_policy(G)
+            self.K -= self.update_policy(G)
             
         

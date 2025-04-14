@@ -25,14 +25,14 @@ def main(mode,
                     exp_name=exp_name,
                     _w=_w,
                     _sigma_a=_sigma_a,
-                    is_vis=False)
+                    is_vis=True)
     
     learning.learning()
 
 if __name__ == '__main__':
-    main(mode='v2',
+    main(mode='v1',
          T=1000,
          xi=0.00001,
-         exp_name='mflqv2',
+         exp_name='mflqv1',
          _w=0.3,
          _sigma_a=0.5)
