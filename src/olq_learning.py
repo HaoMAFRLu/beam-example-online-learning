@@ -149,7 +149,9 @@ class OLQ():
         self.W_param.value = W
         self.M_param.value = np.hstack((self.A, self.B @ K))
         
-        self.prob.solve(solver=cp.SCS, eps=1, max_iters=200, verbose=True)
+        # self.prob.solve(solver=cp.CVXOPT, options={'abstol': 1e-2, 'reltol': 1e-1, 'feastol': 1e-1})
+        # self.prob.solve(solver=cp.ECOS, tol=1e-2, feastol=1e-2, abstol=1e-2, reltol=1e-2)
+        self.prob.solve(solver=cp.SCS, eps=1e-1, max_iters=200, verbose=False)
         return self.Sigma.value
 
     # def projection(self, Sigma_tilde, nu, W, K):

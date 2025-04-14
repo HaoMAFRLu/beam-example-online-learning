@@ -30,6 +30,6 @@ def main(T: int,
 
 if __name__ == '__main__':
     main(T=1000,
-         alpha = 1.0,
-         epsilon = 0.10,
-         eta = 25.0)
+         alpha=0.1,
+         epsilon=1.0,
+         eta=15.0)
