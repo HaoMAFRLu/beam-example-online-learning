@@ -16,8 +16,6 @@ import environmnet
 from trajectory import TRAJ
 import params
 
-
-
 def load_file(path: Path) -> dict:
     """Load data from specified file.
     """
