@@ -169,7 +169,7 @@ class MFLQ():
             self.Phi_plus[i, :] = self.get_vec(yout)
             self.W[i, :] = self.w.flatten()
 
-            loss = fcs.get_loss(yref, yout)
+            loss = fcs.get_loss(yref.flatten(), yout.flatten())
 
             self.save_data(iteration=self.cur_it,
                            loss=loss,

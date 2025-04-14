@@ -27,6 +27,7 @@ class AC():
                  exp_name: str='test',
                  kappa: float=5.0,  # trace limit
                  gamma: float=0.05,
+                 sigma: float=0.1,
                  is_vis: bool=False):
         """Learning using model-free control of LQ systems.
         """
@@ -38,7 +39,8 @@ class AC():
         self.H = H
         self.gamma = gamma
         self.kappa = kappa
-    
+        self.sigma = sigma
+
         self.root = fcs.get_parent_path(lvl=1)
 
         folder_name = fcs.get_folder_name()
@@ -78,11 +80,10 @@ class AC():
     def get_M_list(self):
         """
         """
-        sigma = 0.1
         self.M_list = []
         self.w_list = []
         for i in range(self.H):
-            temp = sigma * torch.randn(self.l, self.l, requires_grad=True, dtype=torch.float32, device=self.device)
+            temp = self.sigma * torch.randn(self.l, self.l, requires_grad=True, dtype=torch.float32, device=self.device)
             self.M_list.append(temp.detach().clone().requires_grad_())
             self.w_list.append(torch.zeros((self.l, 1), dtype=torch.float32, device=self.device))
             
@@ -126,11 +127,15 @@ class AC():
         """
         M_temp = [self.M_list[i] - self.eta * self.M_grad[i] for i in range(self.H)]
         for i in range(self.H):
-            norm_bound = self.kappa**4 * (1 - self.gamma)**i
+            norm_bound = self.kappa**4 * (1 - self.gamma)
             if torch.norm(M_temp[i]) > norm_bound:
                 self.M_list[i] = (M_temp[i] * (norm_bound / torch.norm(M_temp[i]))).detach().clone().requires_grad_()
             else:
                 self.M_list[i] = M_temp[i].detach().clone().requires_grad_()
+
+        temp = self.sigma * torch.randn(self.l, self.l, requires_grad=True, dtype=torch.float32, device=self.device)        
+        self.M_list.insert(0, temp.detach().clone().requires_grad_()) 
+        self.M_list.pop()
 
     def update_w(self, yout, u):
         """
