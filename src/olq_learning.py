@@ -74,6 +74,21 @@ class OLQ():
         ], dim=0)
 
         self.A = np.zeros((self.l, self.l))
+        self.set_cvxpy()
+
+    def set_cvxpy(self):
+        self.Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
+        self.Sigma_tilde_param = cp.Parameter((self.l * 2, self.l * 2), name="Sigma_tilde")
+        self.nu_param = cp.Parameter(nonneg=True, name="nu")
+        self.W_param = cp.Parameter((self.l, self.l), name="W")
+        self.M_param = cp.Parameter((self.l, self.l * 2), name="M")
+        self.objective = cp.Minimize(cp.norm(self.Sigma - self.Sigma_tilde_param, 'fro'))
+        self.constraints = [
+            self.Sigma >> 0,                         
+            cp.trace(self.Sigma) <= self.nu_param,         
+            self.Sigma[:self.l, :self.l] == self.M_param @ self.Sigma @ self.M_param.T + self.W_param
+        ]
+        self.prob = cp.Problem(self.objective, self.constraints)
 
     def update_L(self, K) -> Array2D:
         """
@@ -129,24 +144,33 @@ class OLQ():
         return np.diag(dy)
 
     def projection(self, Sigma_tilde, nu, W, K):
-        """
-        """  
-        Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
+        self.Sigma_tilde_param.value = Sigma_tilde
+        self.nu_param.value = nu
+        self.W_param.value = W
+        self.M_param.value = np.hstack((self.A, self.B @ K))
         
-        M = np.hstack((self.A, self.B@K))
+        self.prob.solve(solver=cp.SCS, eps=1, max_iters=200, verbose=True)
+        return self.Sigma.value
+
+    # def projection(self, Sigma_tilde, nu, W, K):
+    #     """
+    #     """  
+    #     Sigma = cp.Variable((self.l * 2, self.l * 2), symmetric=True)
         
-        objective = cp.Minimize(cp.norm(Sigma - Sigma_tilde, 'fro'))
+    #     M = np.hstack((self.A, self.B@K))
         
-        constraints = [
-            Sigma >> 0,  
-            cp.trace(Sigma) <= nu,  
-            Sigma[:self.l, :self.l] == M @ Sigma @ M.T + W
-        ]
+    #     objective = cp.Minimize(cp.norm(Sigma - Sigma_tilde, 'fro'))
         
-        prob = cp.Problem(objective, constraints)
-        prob.solve(solver=cp.SCS, eps=1, max_iters=200, verbose=True) 
+    #     constraints = [
+    #         Sigma >> 0,  
+    #         cp.trace(Sigma) <= nu,  
+    #         Sigma[:self.l, :self.l] == M @ Sigma @ M.T + W
+    #     ]
         
-        return Sigma.value
+    #     prob = cp.Problem(objective, constraints)
+    #     prob.solve(solver=cp.SCS, eps=1, max_iters=200, verbose=True) 
+        
+    #     return Sigma.value
 
     def learning(self) -> None:
         loss_list = []
