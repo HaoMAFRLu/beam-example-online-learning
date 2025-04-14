@@ -30,4 +30,4 @@ def main(alpha: float,
 if __name__ == '__main__':
     main(alpha = 1.0,
          epsilon = 0.10,
-         eta = 15.0)
+         eta = 50.0)

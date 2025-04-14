@@ -65,8 +65,6 @@ class OLQ():
         self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
         self.env = fcs.env_initialization(SIM_PARAMS)
         
-        self.E = torch.eye((self.l + self.l) ** 2, dtype=torch.float32).to(self.device) * 1e-2
-
         self.Q = torch.eye(self.l, dtype=torch.float32).to(self.device)
         self.R = torch.eye(self.l, dtype=torch.float32).to(self.device) * 0.05
 
@@ -146,7 +144,7 @@ class OLQ():
         ]
         
         prob = cp.Problem(objective, constraints)
-        prob.solve(solver=cp.SCS, eps=1e-1, max_iters=500, verbose=False) 
+        prob.solve(solver=cp.SCS, eps=1, max_iters=200, verbose=True) 
         
         return Sigma.value
 
