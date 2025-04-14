@@ -1,0 +1,9 @@
+executable = /lustre/home/hma2/projects/OnlineLearning/myenv/bin/python
+arguments = -u scripts/beam_mflq_learning.py
+error  = jobs/mflqv2/task$(Process).err
+output = jobs/mflqv2/task$(Process).out
+log    = jobs/mflqv2/task$(Process).log
+request_gpus = 1
+request_memory = 65536
+request_cpus = 1
+queue
