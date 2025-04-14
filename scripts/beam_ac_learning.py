@@ -25,14 +25,14 @@ def main(T: int,
                   eta=eta,
                   kappa=kappa,
                   gamma=gamma,
-                  is_vis=True)
+                  is_vis=False)
     
     learning.learning()
 
 if __name__ == '__main__':
-    main(T=500,
-         H=80,
+    main(T=1000,
+         H=100,
          exp_name='ac',
-         eta=1.0,
+         eta=5.0,
          kappa=5.0,
          gamma=0.05)

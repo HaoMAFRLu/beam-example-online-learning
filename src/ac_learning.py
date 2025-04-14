@@ -154,7 +154,11 @@ class AC():
             self.update_M()
             self.update_w(yout, u)
 
-
+            self.save_data(iteration=i,
+                           loss=loss,
+                           yref=yref,
+                           yout=yout)
+            
             fcs.print_info(
                 Epoch=[str(i)],
                 Loss=[loss])
@@ -175,5 +179,4 @@ class AC():
                 
                 time.sleep(0.01)
             
-        self.save_data(iteration=i,
-                        loss=loss_list)
+        

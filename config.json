@@ -3,7 +3,7 @@
     "StartTime": "0.0",
     "AbsTol": "1e-7",
     "Solver": "ode23t",
-    "dt": 0.02,
+    "dt": 0.01,
     "SimulationMode": "accelerator",
     "data_format": "win2win",
     "is_normalization": false,
