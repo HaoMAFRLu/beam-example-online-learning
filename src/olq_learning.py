@@ -195,6 +195,12 @@ class OLQ():
                 Epoch=[str(i)],
                 Loss=[loss])
             
+            self.save_data(iteration=i,
+                           loss=loss,
+                           yref=yref,
+                           yout=yout)
+            
+            
             loss_list.append(loss)
             it_list.append(i)
 
@@ -211,5 +217,4 @@ class OLQ():
                 
                 time.sleep(0.01)
             
-        self.save_data(iteration=i,
-                        loss=loss_list)
+        
