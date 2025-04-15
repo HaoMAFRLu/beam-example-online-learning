@@ -94,7 +94,7 @@ class RAC():
     def update_B(self, Y, U):
         """
         """
-        return Y@U.t()@torch.linalg.inv(U@U.t())
+        return Y@torch.linalg.pinv(U)
     
     def save_data(self, iteration: int,
                   **kwargs) -> None:
