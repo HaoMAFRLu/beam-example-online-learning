@@ -29,7 +29,7 @@ def main(Ts,
 
 if __name__ == '__main__':
     main(Ts=50,
-         Ti=80,
+         Ti=30,
          eta=5.0,
          sigma=5.0,
          exp_name='ba')
