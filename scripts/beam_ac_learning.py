@@ -33,6 +33,6 @@ if __name__ == '__main__':
     main(T=1000,
          H=100,
          exp_name='ac',
-         eta=1000.0,
+         eta=100000.0,
          kappa=5.0,
          gamma=0.05)
