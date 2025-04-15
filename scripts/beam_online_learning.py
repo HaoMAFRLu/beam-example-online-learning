@@ -12,15 +12,17 @@ from online_learning import OnlineLearning
 random.seed(9527)
 torch.manual_seed(9527)
 
-def main(T: int,
+def main(mode:str,
+         T: int,
+         exp_name: str,
          alpha: float,
          epsilon: float,
          eta: float):
     """For the specific meaning of the parameters 
     please refer to the paper.
     """ 
-    online_learning = OnlineLearning(mode='newton',
-                                     exp_name='online_learning',
+    online_learning = OnlineLearning(mode=mode,
+                                     exp_name=exp_name,
                                      alpha=alpha,
                                      epsilon=epsilon,
                                      eta=eta,
@@ -29,7 +31,9 @@ def main(T: int,
     online_learning.online_learning(T)
 
 if __name__ == '__main__':
-    main(T=1000,
+    main(mode='gradient',
+         T=1000,
+         exp_name='gradient',
          alpha=0.1,
          epsilon=1.0,
-         eta=15.0)
+         eta=0.1)
