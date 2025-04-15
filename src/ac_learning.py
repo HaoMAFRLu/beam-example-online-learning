@@ -160,7 +160,7 @@ class AC():
 
             self.update_M()
             # self.update_w(yout, u)
-            self.update_w(yref, u)
+            self.update_w(yout, u)
 
             self.save_data(iteration=i,
                            loss=loss,
