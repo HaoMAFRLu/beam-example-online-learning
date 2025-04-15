@@ -30,6 +30,6 @@ def main(Ts,
 if __name__ == '__main__':
     main(Ts=100,
          Ti=20,
-         eta=1.0,
+         eta=0.1,
          sigma=0.5,
          exp_name='ba')
