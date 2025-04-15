@@ -5,7 +5,7 @@ import torch
 import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from mflq_learning import MFLQ
+from mflqv2_learning import MFLQ
 
 random.seed(9527)
 torch.manual_seed(9527)

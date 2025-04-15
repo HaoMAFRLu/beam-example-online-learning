@@ -31,8 +31,8 @@ def main(T: int,
 
 if __name__ == '__main__':
     main(T=1000,
-         H=50,
+         H=100,
          exp_name='ac',
-         eta=5.0,
+         eta=10.0,
          kappa=5.0,
          gamma=0.05)

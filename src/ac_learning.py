@@ -128,10 +128,10 @@ class AC():
         M_temp = [self.M_list[i] - self.eta * self.M_grad[i] for i in range(self.H)]
         for i in range(self.H):
             norm_bound = self.kappa**4 * (1 - self.gamma)
-            if torch.norm(M_temp[i]) > norm_bound:
-                self.M_list[i] = (M_temp[i] * (norm_bound / torch.norm(M_temp[i]))).detach().clone().requires_grad_()
-            else:
-                self.M_list[i] = M_temp[i].detach().clone().requires_grad_()
+            # if torch.norm(M_temp[i]) > norm_bound:
+            #     self.M_list[i] = (M_temp[i] * (norm_bound / torch.norm(M_temp[i]))).detach().clone().requires_grad_()
+            # else:
+            self.M_list[i] = M_temp[i].detach().clone().requires_grad_()
 
         temp = self.sigma * torch.randn(self.l, self.l, requires_grad=True, dtype=torch.float32, device=self.device)        
         self.M_list.insert(0, temp.detach().clone().requires_grad_()) 
@@ -141,8 +141,8 @@ class AC():
         """
         """
         y = torch.from_numpy(yout.reshape(-1, 1)).float().to(self.device)
-        # w = y - self.B@u
-        w = y
+        w = y - self.B@u
+        # w = y
         self.w_list.insert(0, w) 
         self.w_list.pop()   
 
