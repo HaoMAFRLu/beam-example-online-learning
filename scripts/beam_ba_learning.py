@@ -28,8 +28,8 @@ def main(Ts,
     learning.learning()
 
 if __name__ == '__main__':
-    main(Ts=100,
-         Ti=20,
-         eta=0.1,
+    main(Ts=50,
+         Ti=30,
+         eta=1.0,
          sigma=0.5,
          exp_name='ba')
