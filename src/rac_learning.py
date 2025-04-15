@@ -48,6 +48,9 @@ class RAC():
 
         self.cur_it = -1
 
+        self.loss_list = []
+        self.it_list = []
+
         if self.is_vis is True:
             plt.ion()          
 
@@ -88,50 +91,6 @@ class RAC():
         yref, _ = self.traj.get_traj()
         return yref[0, 1:]
     
-    def get_l_loss(self, y1: Array, y2: Array) -> float:
-        """
-        """
-        dy = torch.from_numpy(y1 - y2).float().to(self.device)
-        return torch.dot(dy, dy)
-
-    def run_mult_rounds(self, K: Array2D) -> None:
-        """
-        """
-        for i in range(self.Ti):
-            self.cur_it += 1
-
-            yref = self.get_traj()
-            u = self.get_u(K, yref)
-            yout, _ = self.env.one_step(u.flatten())
-
-            self.us[:, i] = torch.from_numpy(u.flatten()).float().to(self.device)
-            self.ys[:, i] = torch.from_numpy(yout.flatten()).float().to(self.device)
-    
-            loss = fcs.get_loss(yref.flatten(), yout.flatten())
-
-            self.save_data(iteration=self.cur_it,
-                           loss=loss,
-                           yref=yref,
-                           yout=yout)
-            
-            fcs.print_info(Iteration=[str(self.cur_it)],
-                           Loss=[loss])
-            
-            self.losses.append(loss)
-            self.iterations.append(self.cur_it)
-
-            if self.is_vis is True:
-                plt.clf()
-                plt.plot(self.iterations, self.losses, label='Training Loss')
-                plt.xlabel('Iteration')
-                plt.ylabel('Loss')
-                plt.title('Training Process')
-                plt.legend()
-                
-                plt.pause(0.01)
-                
-                time.sleep(0.01)
-    
     def update_B(self, Y, U):
         """
         """
@@ -146,10 +105,53 @@ class RAC():
         with open(path_data, 'wb') as file:
             pickle.dump(kwargs, file)
 
-    def learning(self) -> None:
+    def save_and_print(self, it, yout, yref):
+        loss = fcs.get_loss(yref.flatten(), yout.flatten())
+        self.save_data(iteration=it,
+                        loss=loss,
+                        yref=yref,
+                        yout=yout)
+        fcs.print_info(
+                Epoch=[str(it)],
+                Loss=[loss])
+        
+        self.loss_list.append(loss)
+        self.it_list.append(it)
 
+        if self.is_vis is True:
+            
+            plt.clf()
+            plt.plot(self.it_list, self.loss_list, label='Training Loss')
+            plt.xlabel('Iteration')
+            plt.ylabel('Loss')
+            plt.title('Training Process')
+            plt.legend()
+            
+            plt.pause(0.01)
+            
+            time.sleep(0.01)
+    
+    def run_nominal(self, K):
+        """
+        """
+        yref = self.get_traj()
+        u = self.get_u(K, yref)
+        yout, _ = self.env.one_step(u.flatten())
+        return yref.flatten(), yout.flatten(), u.flatten()
+    
+    def to_torch(self, a):
+        return torch.from_numpy(a.flatten()).float().to(self.device)
+    
+    def learning(self) -> None:
         for i in range(self.Ts):
-            self.run_mult_rounds(self.K)
+            yref, yout, u = self.run_nominal(self.K)
+            self.save_and_print(i, yout, yref)
+            
+            for ii in range(self.Ti):
+                yref, yout, u = self.run_nominal(self.K)
+                self.us[:, ii] = self.to_torch(u)
+                self.ys[:, ii] = self.to_torch(yout)
+
             self.B = self.update_B(self.ys, self.us)
             self.K = self.policy_update(self.B)
             

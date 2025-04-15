@@ -24,6 +24,6 @@ def main(Ts,
     learning.learning()
 
 if __name__ == '__main__':
-    main(Ts=20,
-         Ti=50,
-         exp_name='rac')
+    main(Ts=50,
+         Ti=30,
+         exp_name='rac30')
