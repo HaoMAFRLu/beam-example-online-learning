@@ -1,0 +1,9 @@
+executable = /lustre/home/hma2/projects/OnlineLearning/myenv/bin/python
+arguments = -u scripts/beam_rac_learning.py
+error  = jobs/rac/task$(Process).err
+output = jobs/rac/task$(Process).out
+log    = jobs/rac/task$(Process).log
+request_gpus = 1
+request_memory = 65536
+request_cpus = 1
+queue
