@@ -23,13 +23,13 @@ def main(Ts,
                   eta=eta,
                   sigma=sigma,
                   exp_name=exp_name,
-                  is_vis=False)
+                  is_vis=True)
     
     learning.learning()
 
 if __name__ == '__main__':
     main(Ts=50,
-         Ti=30,
-         eta=1.0,
-         sigma=0.5,
+         Ti=80,
+         eta=5.0,
+         sigma=5.0,
          exp_name='ba')

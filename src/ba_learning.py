@@ -69,8 +69,8 @@ class BA():
         self.l = math.floor(float(SIM_PARAMS['StopTime']) / SIM_PARAMS['dt'])
         self.B = self.load_dynamic_model(self.l)
         self.B = torch.from_numpy(self.B).float().to(self.device)
-        # tmp = torch.linalg.pinv(self.B).float().to(self.device)
-        tmp = torch.ones_like(self.B).float().to(self.device) * 1.0
+        tmp = torch.linalg.pinv(self.B).float().to(self.device)
+        # tmp = torch.ones_like(self.B).float().to(self.device) * 1.0
         self.K = tmp.detach().clone().requires_grad_()
 
         self.dus = torch.zeros((self.l, self.Ti), dtype=float).to(self.device)
@@ -123,7 +123,8 @@ class BA():
     def run_random(self, u, yout):
         u_bar = self.get_random_u(u.flatten())
         y_bar, _ = self.env.one_step(u_bar)
-        return y_bar.flatten()-yout, u_bar - u
+        # return y_bar.flatten()-yout, u_bar - u
+        return y_bar.flatten(), u_bar
 
     def save_and_print(self, it, yout, yref):
         loss = fcs.get_loss(yref.flatten(), yout.flatten())
