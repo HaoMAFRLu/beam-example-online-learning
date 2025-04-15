@@ -25,5 +25,5 @@ def main(Ts,
 
 if __name__ == '__main__':
     main(Ts=50,
-         Ti=30,
+         Ti=80,
          exp_name='rac30')
