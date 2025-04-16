@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # parser.add_argument('--Ti', type=int, required=True, help="Ti")
     # args = parser.parse_args()
 
-    main(Ts=500,
+    main(Ts=1000,
          Ti=2,
          eta=1000.0,
          sigma=5.0,

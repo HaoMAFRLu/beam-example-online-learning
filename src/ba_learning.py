@@ -75,7 +75,7 @@ class BA():
         self.B = self.load_dynamic_model(self.l)
         self.B = torch.from_numpy(self.B).float().to(self.device)
         # tmp = torch.linalg.pinv(self.B).float().to(self.device)
-        tmp = torch.ones_like(self.B).float().to(self.device) * 1.0
+        tmp = torch.randn_like(self.B).float().to(self.device)
         self.K = tmp.detach().clone().requires_grad_()
 
         self.dus = torch.zeros((self.l, self.Ti), dtype=float).to(self.device)
