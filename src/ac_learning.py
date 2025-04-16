@@ -36,7 +36,7 @@ class AC():
 
         self.T = T  # number of iterations
         self.eta = eta
-        self.H = H
+        self.H = int(H)
         self.gamma = gamma
         self.kappa = kappa
         self.sigma = sigma
