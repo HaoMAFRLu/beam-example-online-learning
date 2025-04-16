@@ -44,7 +44,7 @@ class AC():
         self.root = fcs.get_parent_path(lvl=1)
 
         # folder_name = fcs.get_folder_name()
-        folder_name = 'ac' + str(int(self.eta))
+        folder_name = 'ac_H' + str(int(self.H))
         
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
         self.path_data = os.path.join(self.path_model, 'data')

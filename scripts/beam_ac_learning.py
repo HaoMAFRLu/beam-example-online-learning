@@ -32,12 +32,12 @@ def main(T: int,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="AC Learning")
-    parser.add_argument('--eta', type=float, required=True, help="eta")
+    parser.add_argument('--H', type=float, required=True, help="H")
     args = parser.parse_args()
-    
+
     main(T=1000,
-         H=100,
+         H=args.H,
          exp_name='ac',
-         eta=args.eta,
+         eta=50.0,
          kappa=5.0,
          gamma=0.05)
