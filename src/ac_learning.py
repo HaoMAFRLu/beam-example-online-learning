@@ -120,7 +120,7 @@ class AC():
         phi.backward(retain_graph=True)
         self.M_grad = []
         for i in range(self.H):
-            self.M_grad.append(self.M_list[i].grad)
+            self.M_grad.append(self.M_list[i].grad.clone())
             self.M_list[i].grad.zero_() 
 
     def update_M(self):
