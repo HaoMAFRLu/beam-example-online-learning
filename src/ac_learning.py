@@ -28,7 +28,8 @@ class AC():
                  kappa: float=5.0,  # trace limit
                  gamma: float=0.05,
                  sigma: float=0.1,
-                 is_vis: bool=False):
+                 is_vis: bool=False,
+                 learn_mode: str='s'):
         """Learning using model-free control of LQ systems.
         """
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,6 +41,8 @@ class AC():
         self.gamma = gamma
         self.kappa = kappa
         self.sigma = sigma
+        self.learn_mode = learn_mode
+        self.fix_yref = None
 
         self.root = fcs.get_parent_path(lvl=1)
 
@@ -102,9 +105,13 @@ class AC():
     def get_traj(self):
         """Remove the first element.
         """
-        yref, _ = self.traj.get_traj()
-        return yref[0, 1:]
-
+        if self.learn_mode == 'm' or self.fix_yref is None:
+            yref, _ = self.traj.get_traj()
+            self.fix_yref = yref
+            return yref[0, 1:]
+        elif self.learn_mode == 's':
+            return self.fix_yref[0, 1:]
+        
     def save_data(self,
                   iteration: int, 
                   **kwargs) -> None:

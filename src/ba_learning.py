@@ -26,7 +26,8 @@ class BA():
                  eta: float=0.1,
                  sigma: float=0.5,
                  exp_name: str='test',
-                 is_vis: bool=False):
+                 is_vis: bool=False,
+                 learn_mode: str='m'):
         """Learning using model-free control of LQ systems.
         """
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -39,6 +40,8 @@ class BA():
         self.Ti = Ti
         self.eta = eta
         self.sigma = sigma
+        self.learn_mode = learn_mode
+        self.fix_yref = None
 
         folder_name = 'ba' + '_' + str(int(self.eta)) + '_' + str(int(self.Ti))
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
@@ -87,9 +90,13 @@ class BA():
     def get_traj(self):
         """Remove the first element.
         """
-        yref, _ = self.traj.get_traj()
-        return yref[0, 1:]
-
+        if self.learn_mode == 'm' or self.fix_yref is None:
+            yref, _ = self.traj.get_traj()
+            self.fix_yref = yref
+            return yref[0, 1:]
+        elif self.learn_mode == 's':
+            return self.fix_yref[0, 1:]
+        
     def save_data(self,
                   iteration: int, 
                   **kwargs) -> None:

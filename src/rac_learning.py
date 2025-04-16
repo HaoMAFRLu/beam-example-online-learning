@@ -23,7 +23,8 @@ class RAC():
                  Ts: int,
                  Ti: int,
                  exp_name: str,
-                 is_vis: bool=False):
+                 is_vis: bool=False,
+                 learn_mode: str='m'):
         """Learning using model-free control of LQ systems.
         """
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -31,7 +32,7 @@ class RAC():
         self.root = fcs.get_parent_path(lvl=1)
         # folder_name = fcs.get_folder_name()
         
-        folder_name = 'rac'+  str(int(Ti))
+        folder_name = 'rac'
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
         self.path_data = os.path.join(self.path_model, 'data')
 
@@ -40,10 +41,12 @@ class RAC():
 
         self.Ts = Ts
         self.Ti = Ti
-
         self.initialization()
         
         self.is_vis = is_vis
+        self.learn_mode = learn_mode
+        self.fix_yref = None
+
         self.losses = []
         self.iterations = []
 
@@ -75,7 +78,8 @@ class RAC():
 
         self.B = self.load_dynamic_model(self.l)
         self.B = torch.from_numpy(self.B).float().to(self.device)
-        self.K = self.policy_update(self.B)
+        # self.K = self.policy_update(self.B)
+        self.K = torch.randn_like(self.B).cpu().numpy()
 
         self.ys = torch.zeros((self.l, self.Ti), dtype=float).to(self.device)
         self.us = torch.zeros((self.l, self.Ti), dtype=float).to(self.device)
@@ -89,8 +93,13 @@ class RAC():
     def get_traj(self):
         """Remove the first element.
         """
-        yref, _ = self.traj.get_traj()
-        return yref[0, 1:]
+        if self.learn_mode == 'm' or self.fix_yref is None:
+            yref, _ = self.traj.get_traj()
+            self.fix_yref = yref[0, 1:]
+            return yref[0, 1:]
+        
+        elif self.learn_mode == 's':
+            return self.fix_yref
     
     def update_B(self, Y, U):
         """
@@ -148,12 +157,15 @@ class RAC():
             yref, yout, u = self.run_nominal(self.K)
             self.save_and_print(i, yout, yref)
             
-            for ii in range(self.Ti):
-                yref, yout, u = self.run_nominal(self.K)
-                self.us[:, ii] = self.to_torch(u)
-                self.ys[:, ii] = self.to_torch(yout)
 
-            self.B = self.update_B(self.ys, self.us)
+            self.us[:, i%self.Ti] = self.to_torch(u)
+            self.ys[:, i%self.Ti] = self.to_torch(yout)
+
+            if i < self.Ti:
+                self.B = self.update_B(self.ys[:, :(i+1)], self.us[:, :(i+1)])
+            else:
+                self.B = self.update_B(self.ys, self.us)
+
             self.K = self.policy_update(self.B)
             
         

@@ -16,7 +16,9 @@ def main(T: int,
          exp_name: str,
          eta: float,
          kappa: float,
-         gamma: float):
+         gamma: float,
+         is_vis: bool,
+         learn_mode: str):
     """For the specific meaning of the parameters 
     please refer to the paper.
     """ 
@@ -26,18 +28,21 @@ def main(T: int,
                   eta=eta,
                   kappa=kappa,
                   gamma=gamma,
-                  is_vis=False)
+                  is_vis=is_vis,
+                  learn_mode=learn_mode)
     
     learning.learning()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="AC Learning")
-    parser.add_argument('--H', type=float, required=True, help="H")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="AC Learning")
+    # parser.add_argument('--H', type=float, required=True, help="H")
+    # args = parser.parse_args()
 
     main(T=1000,
-         H=args.H,
+         H=100,
          exp_name='ac',
          eta=50.0,
          kappa=5.0,
-         gamma=0.05)
+         gamma=0.05,
+         is_vis=False,
+         learn_mode='s')

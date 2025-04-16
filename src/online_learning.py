@@ -32,7 +32,8 @@ class OnlineLearning():
                  alpha: float=None,
                  epsilon: float=None,
                  eta: float=None,
-                 is_vis: bool=False) -> None:
+                 is_vis: bool=False,
+                 learn_mode: str='m') -> None:
         """Initialize the online learning framework.
 
         Args:
@@ -51,6 +52,8 @@ class OnlineLearning():
         self.alpha = alpha
         self.epsilon = epsilon
         self.eta = eta
+        self.learn_mode = learn_mode
+        self.fix_yref = None
 
         folder_name = fcs.get_folder_name()
             
@@ -267,7 +270,7 @@ class OnlineLearning():
         self.nr_marker = 0
         self.loss_marker = []
         self.total_loss = 0
-        yref_marker, _ = self.traj.get_traj()
+        yref_marker = self.get_traj()
         path_marker = os.path.join(self.path_model, 'loss_marker')
         fcs.mkdir(path_marker)
         return yref_marker, path_marker
@@ -319,6 +322,16 @@ class OnlineLearning():
         """
         return torch.cat([p.view(-1) for p in NN.parameters()])
 
+    def get_traj(self):
+        """
+        """
+        if self.learn_mode == 'm' or self.fix_yref is None:
+            yref, _ = self.traj.get_traj()
+            self.fix_yref = yref
+            return self.fix_yref
+        elif self.learn_mode == 's':
+            return self.fix_yref
+
     def online_learning(self, nr_iterations: int=100):
         """Online learning using quasi newton method
         """
@@ -338,7 +351,7 @@ class OnlineLearning():
                 self.run_marker_step(self.env, yref_marker, path_marker)
             
             # get the new reference trajectory
-            yref, _ = self.traj.get_traj()
+            yref = self.get_traj()
 
             # run the simulation and get the outputs
             yout, u, par_pi_par_omega, loss = self._run_sim(self.env, yref, is_gradient=True)

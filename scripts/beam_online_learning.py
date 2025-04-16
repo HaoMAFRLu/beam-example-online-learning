@@ -17,7 +17,9 @@ def main(mode:str,
          exp_name: str,
          alpha: float,
          epsilon: float,
-         eta: float):
+         eta: float,
+         is_vis: bool,
+         learn_mode: str):
     """For the specific meaning of the parameters 
     please refer to the paper.
     """ 
@@ -26,14 +28,17 @@ def main(mode:str,
                                      alpha=alpha,
                                      epsilon=epsilon,
                                      eta=eta,
-                                     is_vis=False)
+                                     is_vis=is_vis,
+                                     learn_mode=learn_mode)
     
     online_learning.online_learning(T)
 
 if __name__ == '__main__':
-    main(mode='gradient',
+    main(mode='newton',
          T=1000,
-         exp_name='gradient',
+         exp_name='newton',
          alpha=0.1,
          epsilon=1.0,
-         eta=0.1)
+         eta=15.0,
+         is_vis=False,
+         learn_mode='s')
