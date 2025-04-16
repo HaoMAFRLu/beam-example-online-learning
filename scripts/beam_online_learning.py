@@ -39,6 +39,6 @@ if __name__ == '__main__':
          exp_name='newton',
          alpha=0.1,
          epsilon=1.0,
-         eta=15.0,
+         eta=30.0,
          is_vis=False,
          learn_mode='s')
