@@ -3,6 +3,7 @@
 import os, sys
 import torch
 import random
+import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from ac_learning import AC
@@ -30,9 +31,13 @@ def main(T: int,
     learning.learning()
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="AC Learning")
+    parser.add_argument('--eta', type=float, required=True, help="eta")
+    args = parser.parse_args()
+    
     main(T=1000,
          H=100,
          exp_name='ac',
-         eta=30.0,
+         eta=args.eta,
          kappa=5.0,
          gamma=0.05)
