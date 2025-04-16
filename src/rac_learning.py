@@ -29,8 +29,9 @@ class RAC():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(torch.cuda.get_device_name(0))
         self.root = fcs.get_parent_path(lvl=1)
-        folder_name = fcs.get_folder_name()
+        # folder_name = fcs.get_folder_name()
         
+        folder_name = 'rac'+  str(int(Ti))
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
         self.path_data = os.path.join(self.path_model, 'data')
 

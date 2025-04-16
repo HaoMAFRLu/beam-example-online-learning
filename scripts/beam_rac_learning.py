@@ -3,6 +3,7 @@
 import os, sys
 import torch
 import random
+import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from rac_learning import RAC
@@ -24,6 +25,11 @@ def main(Ts,
     learning.learning()
 
 if __name__ == '__main__':
-    main(Ts=50,
-         Ti=80,
-         exp_name='rac80')
+
+    parser = argparse.ArgumentParser(description="AC Learning")
+    parser.add_argument('--Ti', type=int, required=True, help="Ti")
+    args = parser.parse_args()
+
+    main(Ts=500,
+         Ti=args.Ti,
+         exp_name='rac')
