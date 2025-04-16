@@ -74,8 +74,8 @@ class AC():
         self.B = self.load_dynamic_model(self.l)
         
         self.B = torch.from_numpy(self.B).float().to(self.device)
-        # self.K = torch.ones_like(self.B).float().to(self.device) * 0.1
-        self.K = torch.linalg.pinv(self.B)
+        self.K = torch.randn_like(self.B).float().to(self.device)
+        # self.K = torch.linalg.pinv(self.B)
 
         self.traj = fcs.traj_initialization(SIM_PARAMS['dt'])
         self.env = fcs.env_initialization(SIM_PARAMS)
