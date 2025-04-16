@@ -33,19 +33,21 @@ class BA():
         print(torch.cuda.get_device_name(0))
         self.root = fcs.get_parent_path(lvl=1)
 
-        folder_name = fcs.get_folder_name()
+        # folder_name = fcs.get_folder_name()
         
+        self.Ts = Ts
+        self.Ti = Ti
+        self.eta = eta
+        self.sigma = sigma
+
+        folder_name = 'ba' + '_' + str(int(self.eta)) + '_' + str(int(self.Ti))
         self.path_model = os.path.join(self.root, 'data', exp_name, folder_name)
         self.path_data = os.path.join(self.path_model, 'data')
 
         fcs.mkdir(self.path_model)
         fcs.mkdir(self.path_data)
 
-        self.Ts = Ts
-        self.Ti = Ti
-        self.eta = eta
-        self.sigma = sigma
-
+        
         self.initialization()
         
         self.loss_list = []
