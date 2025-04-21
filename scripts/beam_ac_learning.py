@@ -41,8 +41,8 @@ if __name__ == '__main__':
     main(T=1000,
          H=100,
          exp_name='ac',
-         eta=100.0,
+         eta=50.0,
          kappa=5.0,
          gamma=0.05,
          is_vis=False,
-         learn_mode='s')
+         learn_mode='m')
