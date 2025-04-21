@@ -31,4 +31,4 @@ if __name__ == '__main__':
          Ti=30,
          exp_name='rac',
          is_vis=False,
-         learn_mode='s')
+         learn_mode='m')
