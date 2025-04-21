@@ -44,4 +44,4 @@ if __name__ == '__main__':
          sigma=5.0,
          exp_name='ba',
          is_vis=False,
-         learn_mode='s')
+         learn_mode='m')
