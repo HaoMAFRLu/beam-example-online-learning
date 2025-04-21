@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # args = parser.parse_args()
 
     main(Ts=1000,
-         Ti=2,
+         Ti=5,
          eta=1000.0,
          sigma=5.0,
          exp_name='ba',
